@@ -1,0 +1,89 @@
+/* ============================================================
+   DESIGN TOKENS — Monochrome-first, color-as-content
+   Scene 01 Loading → 02 Photo → 03 Project → 04 Collaborate
+   ------------------------------------------------------------
+   Sumber: Design Master Plan §2 (Visual Design System)
+   Warna tambahan TIDAK didefinisikan di sini sebagai "accent",
+   warna hanya boleh datang dari konten (foto / project image).
+   ============================================================ */
+
+:root {
+  /* ---- Color -------------------------------------------- */
+  --color-bg:            #080808;   /* near-black, base seluruh scene */
+  --color-text-primary:  #F2F2F2;   /* headline, nama, metadata aktif */
+  --color-text-secondary:#8A8A8A;   /* label, sub-teks                */
+  --color-muted:         #454545;   /* garis tipis, disabled, ghost  */
+  --color-surface:       #0E0E0E;   /* panel/modal di atas bg          */
+  --color-surface-2:     #141414;   /* layer lebih tinggi               */
+  --color-line:          #1F1F1F;   /* hairline border                  */
+  --color-overlay:       rgba(8, 8, 8, 0.72); /* dimmer untuk modal     */
+
+  /* ---- Typography ---------------------------------------- */
+  /* Modern grotesk, editorial. Bebas dari gaya SaaS/dashboard. */
+  --font-grotesk: "Helvetica Neue", "Arial Narrow", "Inter", system-ui, -apple-system, sans-serif;
+  --font-mono:    "IBM Plex Mono", "SFMono-Regular", ui-monospace, monospace;
+
+  /* Skala kontras ekstrem: metadata kecil ↔ headline besar */
+  --text-meta:   0.6875rem;  /* 11px — corner labels, uppercase + tracking */
+  --text-small:  0.8125rem;  /* 13px                                     */
+  --text-body:   1rem;       /* 16px                                     */
+  --text-lead:   clamp(1.125rem, 1.6vw, 1.5rem);
+  --text-h3:     clamp(1.5rem, 2.5vw, 2.25rem);
+  --text-h2:     clamp(2.25rem, 5vw, 4.5rem);
+  --text-h1:     clamp(3.5rem, 9vw, 9rem);   /* LET'S COLLABORATE dsb.    */
+  --text-display:clamp(5rem, 14vw, 16rem);   /* dipakai jika perlu        */
+
+  --tracking-meta: 0.18em;
+  --tracking-tight:-0.02em;
+  --leading-tight: 0.95;
+  --leading-body:  1.6;
+
+  /* ---- Shape / Depth ------------------------------------- */
+  --radius-sharp: 2px;   /* sudut tegas — radius default      */
+  --radius-sm:    4px;   /* maksimum yang diizinkan           */
+  --shadow-none:  none;  /* shadow & glow sangat terbatas     */
+
+  /* Kedalaman berasal dari layering + transform, bukan blur/shadow */
+  --z-base:     0;
+  --z-scene:    10;
+  --z-overlay:  100;
+  --z-modal:    1000;
+  --z-loading:  2000;
+
+  /* ---- Layout -------------------------------------------- */
+  --edge-padding: clamp(1rem, 3vw, 2.5rem); /* jarak metadata ke 4 sudut */
+  --photo-max:    min(72vh, 560px);
+
+  /* ---- Motion -------------------------------------------- */
+  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out-quart: cubic-bezier(0.76, 0, 0.24, 1);
+  --dur-fast: 180ms;
+  --dur-base: 420ms;
+  --dur-slow: 900ms;
+
+  /* ---- Breakpoints (referensi desain, §10) -------------- */
+  /* 320–374 | 375–767 | 768–1023 | 1024–1439 | 1440–1919 | >=1920 */
+}
+
+/* Mobile = art direction tersendiri (§10): rotasi dikurangi,
+   fluid berhenti di luar Photo Scene (diatur oleh sistem, bukan CSS). */
+@media (max-width: 767px) {
+  :root {
+    --edge-padding: 0.875rem;
+    --photo-max: min(58vh, 420px);
+  }
+}
+
+/* Hormati prefers-reduced-motion (§10, §13) */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-fast: 1ms;
+    --dur-base: 1ms;
+    --dur-slow: 1ms;
+  }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

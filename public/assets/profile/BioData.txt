@@ -1,0 +1,5 @@
+[PLACEHOLDER BioData]
+Nama: Nathan
+Role: Student
+Jurusan: Software Development / AI Engineering
+(Pengganti — isi dengan biografi final)
