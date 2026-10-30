@@ -14,7 +14,7 @@
    ============================================================ */
 
 import { useEffect, useRef } from 'react';
-import type { FluidEngine } from '../../fluid/core/FluidEngine';
+import type { FluidEngine } from '../fluid/core/FluidEngine';
 
 type UVConverter = (cx: number, cy: number) => { u: number; v: number; inside: boolean };
 
