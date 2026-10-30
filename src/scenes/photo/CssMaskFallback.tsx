@@ -8,7 +8,7 @@
    ============================================================ */
 
 import { useEffect, useRef } from 'react';
-import './FluidReveal.css';
+import './effects/FluidReveal.css';
 
 interface Props {
   bwSrc: string;

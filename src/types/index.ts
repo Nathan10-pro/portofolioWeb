@@ -28,6 +28,10 @@ export interface ProfileData {
   name: string;
   role: string;
   major: string;
+  /** Tagline kecil di bawah identitas Photo (§6 spec PHOTO v2.0). */
+  tagline?: string;
+  /** Sub-tagline (mis. "Design · Development · Experimentation"). */
+  taglineSub?: string;
   cornerMeta: CornerMeta[];
   /** Isi Photo Bio Modal (§4). Placeholder sampai BioData.txt final. */
   bio: {

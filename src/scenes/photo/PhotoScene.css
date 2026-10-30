@@ -62,14 +62,51 @@
 
 .photo-hint {
   position: absolute;
-  bottom: calc(var(--edge-padding) + 2.2rem);
+  bottom: calc(var(--edge-padding) + 1.2rem);
   left: 50%;
   transform: translateX(-50%);
   color: var(--color-text-secondary);
 }
+.photo-hint-arrow { display: inline-block; }
+
+/* ---------- Identitas & tagline di bawah foto (spec v2.0 §6) ---------- */
+.photo-identity {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--edge-padding) + 3.4rem);
+  transform: translateX(-50%);
+  text-align: center;
+  max-width: min(92vw, 560px);
+}
+.photo-name {
+  font-size: clamp(1.6rem, 3.2vw, 2.6rem);
+  font-weight: 600;
+  letter-spacing: var(--tracking-tight);
+  line-height: 1;
+  color: var(--photo-text, var(--color-text-primary));
+}
+.photo-name-dot { color: var(--color-muted); }
+.photo-role { margin-top: 0.55rem; }
+.photo-tagline {
+  margin-top: 0.85rem;
+  font-size: var(--text-body-sm, 0.85rem);
+  color: var(--photo-muted, var(--color-text-secondary));
+  letter-spacing: 0.02em;
+}
+.photo-tagline-sub {
+  margin-top: 0.25rem;
+  font-size: var(--text-meta);
+  letter-spacing: var(--tracking-meta);
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
 @media (max-width: 767px) {
-  .photo-hint { bottom: calc(var(--edge-padding) + 3rem); }
+  .photo-hint { bottom: calc(var(--edge-padding) + 2.4rem); }
   .photo-index { display: none; }
+  /* Mobile: identitas tetap di bawah foto, hint turun sedikit */
+  .photo-identity { bottom: calc(var(--edge-padding) + 4.2rem); }
+  .photo-tagline, .photo-tagline-sub { display: none; } /* hemat ruang vertikal */
 }
 
 /* ---------- Fallback non-WebGL ---------- */
