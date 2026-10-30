@@ -1,10 +1,13 @@
 /* ============================================================
-   LOADING SCENE — STUB (Tahap 2: Experience Shell)
-   Tahap 3 nanti mengisi: logo enter → gerakan halus → exit.
-   Shell menunggu promise onDone sebelum pindah ke Photo Scene.
+   LOADING SCENE — wrapper swap lifecycle (Tahap 3: FINAL).
+   Implementasi visual & timeline ada di ./LoadingScreen.tsx.
+   Scene ini hanya menjaga kontrak Shell: mounted saat aktif,
+   memanggil onDone() setelah mask reveal selesai → Photo aktif.
+   Karena swap lifecycle, ia TIDAK pernah muncul lagi ketika
+   pengguna berpindah antar bagian (aturan spec §05).
    ============================================================ */
 
-import { useEffect } from 'react';
+import LoadingScreen from './LoadingScreen';
 
 interface Props {
   active: boolean;
@@ -13,19 +16,6 @@ interface Props {
 }
 
 export default function LoadingScene({ active, onDone }: Props) {
-  useEffect(() => {
-    if (!active || !onDone) return;
-    // STUB: auto-advance cepat agar navigasi Shell bisa diuji.
-    const t = window.setTimeout(onDone, 900);
-    return () => window.clearTimeout(t);
-  }, [active, onDone]);
-
-  return (
-    <section className="scene scene--loading" data-scene="loading" aria-hidden={!active}>
-      <div className="scene__placeholder">
-        {/* Placeholder posisi logo final public/assets/logo.png */}
-        <span className="meta-label">LOADING · LOGO HERE [STUB]</span>
-      </div>
-    </section>
-  );
+  if (!active || !onDone) return null;
+  return <LoadingScreen onDone={onDone} />;
 }

@@ -12,7 +12,7 @@
    - Tidak ada progress indicator / navbar (keputusan user #4).
    ============================================================ */
 
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ComponentType } from 'react';
 import gsap from 'gsap';
 
@@ -41,6 +41,13 @@ export default function Experience() {
   const rootRef = useRef<HTMLDivElement>(null);
   /** Layer DOM per-scene, diisi via ref callback untuk transisi GSAP. */
   const layers = useRef(new Map<SceneId, HTMLElement | null>());
+  /** Loading selesai (mask reveal penuh) → photo layer boleh interaktif. */
+  const [loadingDone, setLoadingDone] = useState(false);
+
+  // Boot timestamp utk LoadingScreen (min intro tanpa perlambat artifisial).
+  useEffect(() => {
+    (window as Window & { __npaBootTs?: number }).__npaBootTs ??= performance.now();
+  }, []);
 
   // Simpan referensi DOM tiap scene aktif
   const setLayer = useCallback(
@@ -49,16 +56,29 @@ export default function Experience() {
   );
 
   // Cross-dissolve sederhana setiap kali scene berubah.
-  // (Tahap 3+ akan mengganti ini dengan timeline per-transisi yang lebih sinematik.)
+  // KHUSUS loading→photo: JANGAN meng-fade photo layer — ia dibiarkan
+  // terlihat di belakang loading screen agar mask reveal (clip-path
+  // circle pada loading-screen) membuka foto dari tengah secara
+  // sinematik. onDone LoadingScreen tetap memanggil go('photo') untuk
+  // menandai Photo aktif + meng-unmount loading (swap lifecycle).
   const prev = useRef<SceneId>('loading');
   useEffect(() => {
     const from = layers.current.get(prev.current);
     const to = layers.current.get(scene);
+    const isCinematicEntry = prev.current === 'loading' && scene === 'photo';
     prev.current = scene;
-    if (!from || !to || from === to) return;
+    if (!to || (from === to && !isCinematicEntry)) return;
 
     const dur = reduced ? 0 : 0.6;
-    gsap.to(from, { autoAlpha: 0, duration: dur, ease: 'power2.inOut' });
+    if (from && !isCinematicEntry) {
+      gsap.to(from, { autoAlpha: 0, duration: dur, ease: 'power2.inOut' });
+    }
+    if (isCinematicEntry) {
+      // Photo sudah visible sejak awal (sebagian tertutup loading screen);
+      // cukup pastikan state-nya penuh saat loading selesai.
+      gsap.set(to, { clearProps: 'opacity,visibility' });
+      return;
+    }
     gsap.fromTo(
       to,
       { autoAlpha: 0 },
@@ -81,13 +101,25 @@ export default function Experience() {
   const swapActive = SCENE_REGISTRY.find((r) => !r.persistent && r.id === scene);
 
   return (
-    <div className="experience" ref={rootRef} data-scene={scene}>
+    <div className="experience" ref={rootRef} data-scene={scene} data-loading-done={loadingDone}>
       {/* Overlay stack: selalu mounted, state dipertahankan */}
       {persistent.map(({ id }) => {
         const Cmp = COMPONENTS[id];
+        // Photo layer dibuat visible SEJAK AWAL selama fase loading
+        // (data-reveal-under-loading) sehingga mask reveal membuka foto
+        // dari tengah. Interaksi baru aktif setelah loadingDone (§04.5).
+        const photoUnderLoading = id === 'photo' && !loadingDone;
         const active = scene === id;
         return (
-          <div key={id} className="scene-layer" data-scene-id={id} data-active={active} ref={setLayer(id)}>
+          <div
+            key={id}
+            className="scene-layer"
+            data-scene-id={id}
+            data-active={active || photoUnderLoading}
+            data-interactive={active && (id !== 'photo' || loadingDone)}
+            data-reveal-under-loading={photoUnderLoading || undefined}
+            ref={setLayer(id)}
+          >
             <Cmp
               active={active}
               goNext={id === 'photo' ? () => nextOf(id) && go(nextOf(id)!) : undefined}
@@ -99,9 +131,15 @@ export default function Experience() {
 
       {/* Swap stack: hanya mounted saat aktif */}
       {swapActive && (
-        <div className="scene-layer" data-scene-id={swapActive.id} data-active ref={setLayer(swapActive.id)}>
+        <div className="scene-layer scene-layer--top" data-scene-id={swapActive.id} data-active ref={setLayer(swapActive.id)}>
           {swapActive.id === 'loading' ? (
-            <LoadingScene active onDone={() => go('photo')} />
+            <LoadingScene
+              active
+              onDone={() => {
+                setLoadingDone(true);
+                go('photo');
+              }}
+            />
           ) : (
             <ProjectScene
               active

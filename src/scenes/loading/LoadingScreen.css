@@ -1,0 +1,166 @@
+/* ============================================================
+   LOADING SCREEN — visual & layout (Tahap 3)
+   Spec v1.0: near-black #080808, monogram putih #FFFFFF,
+   secondary #8A8A8A, tanpa gradient warna, tanpa dekorasi.
+   Layout tiga area: top info / center monogram / bottom indikator.
+   Animasi dijalankan GSAP via inline style — file ini hanya
+   menyediakan state statis & fallback reduced-motion.
+   ============================================================ */
+
+.loading-screen {
+  position: absolute;
+  inset: 0;
+  z-index: 30;                 /* di atas overlay stack scene lain */
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  background: var(--color-bg);
+  color: var(--color-text-primary);
+  padding: var(--edge-padding);
+  /* Awal tertutup penuh; mask reveal membuka clip-path dari tengah */
+  clip-path: circle(0% at 50% 50%);
+  will-change: clip-path;
+}
+
+/* ---------- A. TOP — information --------------------------- */
+.loading__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+/* ---------- B. CENTER — monogram ---------------------------- */
+.loading__center {
+  display: grid;
+  place-items: center;
+}
+
+.loading__monogram {
+  display: grid;
+  justify-items: center;
+  gap: 1.25rem;
+  text-align: center;
+}
+
+.loading__monogram-text {
+  display: inline-flex;
+  font-family: var(--font-grotesk);
+  font-weight: 700;
+  /* Kontras editorial: kecil tapi dominan */
+  font-size: clamp(3.5rem, 10vw, 8rem);
+  letter-spacing: 0.14em;
+  margin-right: -0.14em;       /* kompensasi tracking pada char terakhir */
+  line-height: 1;
+  color: #ffffff;              /* spec: logo murni putih */
+  text-transform: uppercase;
+}
+
+.loading__monogram-char {
+  display: inline-block;
+}
+
+.loading__monogram-subtitle {
+  font-size: var(--text-meta);
+  letter-spacing: var(--tracking-meta);
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.loading__monogram-img {
+  width: clamp(120px, 18vw, 220px);
+  height: auto;
+  filter: grayscale(1) contrast(1.05);
+}
+
+/* ---------- C. BOTTOM — indikator --------------------------- */
+.loading__bottom {
+  display: grid;
+  gap: 1.5rem;
+  justify-items: center;
+}
+
+.loading__bottom-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem 2rem;
+  color: var(--color-muted);
+}
+
+.loading__progress {
+  width: min(560px, 90vw);
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.75rem 1.25rem;
+  align-items: end;
+}
+
+.loading__progress-step {
+  color: var(--color-muted);
+}
+
+.loading__progress-main {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.6rem 1rem;
+  align-items: center;
+}
+
+.loading__progress-status {
+  grid-column: 1 / -1;
+  color: var(--color-text-secondary);
+}
+
+/* Spec §3: track abu-abu gelap, fill putih, tebal 2px, transisi halus
+   (transisi gerak dilakukan GSAP pada scaleX — bukan animasi layout). */
+.loading__progress-track {
+  position: relative;
+  height: 2px;
+  background: var(--color-muted);
+  overflow: hidden;
+}
+
+.loading__progress-fill {
+  position: absolute;
+  inset: 0;
+  background: #ffffff;
+  transform-origin: left center;
+  transform: scaleX(0);
+  will-change: transform;
+}
+
+.loading__percent {
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+  min-width: 3.2ch;
+  text-align: right;
+}
+
+/* ---------- Responsive -------------------------------------- */
+/* Mobile: monogram lebih kecil (clamp sudah menangani), padding
+   mengecil, meta bottom disembunyikan bertahap agar tetap bersih. */
+@media (max-width: 767px) {
+  .loading__bottom-meta {
+    gap: 0.35rem 1.25rem;
+    font-size: 0.625rem;
+  }
+}
+
+@media (max-width: 374px) {
+  .loading__bottom-meta span:nth-child(3) {
+    display: none; /* TRANSITION · MASK REVEAL — prioritas dua teratas */
+  }
+}
+
+/* Landscape pendek: kompres vertikal, tetap simetris */
+@media (orientation: landscape) and (max-height: 500px) {
+  .loading__monogram { gap: 0.75rem; }
+  .loading__bottom { gap: 0.75rem; }
+}
+
+/* ---------- Reduced motion fallback --------------------------
+   GSAP durasi→0, tetapi pastikan konten terbaca jika JS mati: */
+@media (prefers-reduced-motion: reduce) {
+  .loading-screen { clip-path: none; }
+  .loading__monogram-text,
+  .loading__monogram-subtitle { opacity: 1; }
+}

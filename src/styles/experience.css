@@ -20,12 +20,31 @@
   /* default: tidak interaktif & tersembunyi sampai diaktifkan */
   opacity: 0;
   visibility: hidden;
+  pointer-events: none;
   will-change: opacity;
 }
 
 .scene-layer[data-active='true'] {
   opacity: 1;
   visibility: visible;
+}
+
+/* Interaksi hanya ketika Shell mengizinkan (photo: setelah loadingDone) */
+.scene-layer[data-interactive='true'] {
+  pointer-events: auto;
+}
+
+/* Swap layer (loading/projects) selalu di atas overlay stack */
+.scene-layer--top {
+  z-index: 20;
+}
+
+/* Foto terlihat "muncul perlahan dari hitam" selama mask reveal:
+   saat loading berjalan, photo layer dirender lebih redup; GSAP/CSS
+   transisi opacity mengembalikan ke penuh begitu loading selesai. */
+.scene-layer[data-reveal-under-loading='true'] {
+  opacity: 0.35;
+  transition: opacity 0.9s ease;
 }
 
 .scene {
