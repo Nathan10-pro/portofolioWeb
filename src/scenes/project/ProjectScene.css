@@ -1,0 +1,336 @@
+/* ============================================================
+   PROJECT SCENE — visual "The Digital Terrain".
+
+   Prinsip: monochrome world, color-as-content (thumbnail tetap
+   warna asli), radius tegas, shadow/glow sangat terbatas, kedalaman
+   dari layering + transform (§2 master plan).
+
+   Palet spec §1: bg jauh #111 / terrain gelap #242424 / terang
+   #454545 / struktur #BDBDBD / highlight #FFF.
+   ============================================================ */
+
+.scene--projects {
+  /* tinggi = viewport; ScrollTrigger menambah pin-spacer sendiri */
+  position: relative;
+  height: 100dvh;
+  overflow: hidden;
+  background: transparent; /* dunia tembus pandang ke photo layer */
+}
+
+/* ---------- jendela dunia (transisi PHOTO → PROJECT) ---------- */
+.world-window {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  /* vignette arsitektural: tepi digelapkan, tengah atas dibiarkan
+     tembus agar potret NPA terasa menjadi langit dunia */
+  background:
+    radial-gradient(120% 90% at 50% 30%, rgba(8, 8, 8, 0.55) 0%, rgba(8, 8, 8, 0.86) 55%, rgba(8, 8, 8, 0.96) 100%),
+    linear-gradient(180deg, rgba(17, 17, 17, 0.25) 0%, rgba(17, 17, 17, 0.75) 60%, #111111 100%);
+  backdrop-filter: saturate(0.4); /* desaturasi ringan photo di bawahnya — monochrome world */
+}
+
+/* ---------- track horizontal ---------- */
+.project-track {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: max(2600px, calc(100vw + 1200px));
+  will-change: transform;
+  z-index: 2;
+}
+
+/* ---------- landmark object ---------- */
+.project-object {
+  position: absolute;
+  transform-origin: center;
+  transform: rotate(var(--base-rot)) scale(var(--obj-scale));
+  perspective: 900px;
+  transition: filter 0.4s ease;
+}
+
+.project-object__hit {
+  all: unset;
+  display: block;
+  cursor: pointer;
+  padding: 1.4rem;                 /* interaction area > visual (§3) */
+  -webkit-tap-highlight-color: transparent;
+}
+
+.project-display {
+  position: relative;
+  width: clamp(220px, 26vw, 420px);
+  aspect-ratio: 16 / 10;
+  background: #161616;
+  border: 1px solid var(--color-line);
+  border-radius: 3px;              /* radius tegas (§2) */
+  overflow: hidden;
+  transform: translateZ(calc(var(--depth) * -60px)); /* kedalaman 2.5D */
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.4s ease;
+}
+
+.project-display img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  filter: saturate(1) contrast(1.02); /* warna ASLI karya dipertahankan */
+}
+
+.project-display__edge {
+  position: absolute;
+  inset: 0;
+  box-shadow: inset 0 0 46px rgba(8, 8, 8, 0.55); /* vignette halus, bukan glow */
+  pointer-events: none;
+}
+
+/* treatment kategori (§5): MAIN besar & menonjol, SIDE tenang,
+   EXPERIMENT eksperimental */
+.project-display--main {
+  width: clamp(300px, 36vw, 560px);
+  border-color: #3A3A3A;
+}
+.project-display--side { opacity: 0.82; }
+.project-display--experiment {
+  width: clamp(180px, 20vw, 320px);
+  border-style: dashed;            /* marker eksperimental */
+  border-color: var(--color-muted);
+}
+
+/* hover — subtil saja (bukan tombol game) */
+.project-object:hover .project-display,
+.project-object__hit:focus-visible .project-display {
+  transform: translateZ(calc(var(--depth) * -60px)) scale(1.035);
+  border-color: #6E6E6E;
+}
+.project-object:hover { filter: brightness(1.06); }
+
+/* ---------- meta label dekat objek ---------- */
+.project-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 0.65rem;
+  margin-top: 0.6rem;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
+  color: var(--color-text-secondary);
+  opacity: 0.75;
+  transition: opacity 0.35s ease;
+}
+.project-object:hover .project-meta { opacity: 1; }
+.project-meta__title { color: var(--color-text-primary); }
+.project-meta__cat--main       { color: #DDDDDD; }
+.project-meta__cat--side       { color: #8A8A8A; }
+.project-meta__cat--experiment { color: #6E6E6E; }
+
+/* float idle: animasi pada elemen dalam agar tidak bentrok gsap.set */
+.project-object__float {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  animation: obj-float 7s ease-in-out infinite;
+  animation-delay: calc(var(--depth) * -3s);
+}
+@keyframes obj-float {
+  0%, 100% { transform: translateY(-4px); }
+  50%      { transform: translateY(5px); }
+}
+
+/* ---------- terrain backdrop ---------- */
+.terrain { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+.terrain__layer {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+}
+.terrain__layer svg {
+  position: absolute;
+  bottom: 0;
+  width: 130%;
+  height: 62%;
+}
+.terrain__layer--bg  svg { height: 46%; opacity: 0.9; transform: translateX(calc(var(--px-bg, 0) * 1px)); }
+.terrain__layer--mid svg { height: 55%; transform: translateX(calc(var(--px-mid, 0) * 1px)); }
+.terrain__layer--fg  svg { height: 30%; transform: translateX(calc(var(--px-fg, 0) * 1px)); }
+
+/* parallax pointer halus — mouse bergeser, lapisan bergerak beda kecepatan */
+@media (pointer: fine) {
+  .scene--projects:has(.project-track:hover) .terrain__floats {
+    transform: translate3d(calc(var(--mx, 0) * 10px), calc(var(--my, 0) * 6px), 0);
+    transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+}
+
+.terrain__floats { position: absolute; inset: 0; }
+.terrain__float {
+  position: absolute;
+  opacity: 0.5;
+  animation: float-drift 12s ease-in-out infinite alternate;
+}
+.terrain__float--cube {
+  width: 10px; height: 10px;
+  border: 1px solid #5A5A5A;
+  transform: rotate(45deg);
+}
+.terrain__float--ring {
+  width: 26px; height: 26px;
+  border: 1px solid #454545;
+  border-radius: 50%;
+}
+.terrain__float--dot {
+  width: 3px; height: 3px;
+  background: #7A7A7A;
+  border-radius: 50%;
+}
+@keyframes float-drift {
+  from { transform: translateY(-8px); }
+  to   { transform: translateY(10px); }
+}
+
+.terrain__fog { position: absolute; left: 0; right: 0; pointer-events: none; }
+.terrain__fog--top {
+  top: 0; height: 34%;
+  background: linear-gradient(180deg, rgba(17,17,17,0.9), rgba(17,17,17,0));
+}
+.terrain__fog--bottom {
+  bottom: 0; height: 22%;
+  background: linear-gradient(0deg, rgba(13,13,13,0.95), rgba(13,13,13,0));
+}
+
+/* ---------- HUD (spec §6) ---------- */
+.world-hud {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;           /* hanya tombol yang interaktif */
+  padding: var(--edge-padding);
+  font-family: var(--font-mono);
+}
+.world-hud__tl, .world-hud__tr, .world-hud__bl, .world-hud__br {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.world-hud__tl { top: var(--edge-padding); left: var(--edge-padding); }
+.world-hud__tr { top: var(--edge-padding); right: var(--edge-padding); text-align: right; align-items: flex-end; }
+.world-hud__bl { bottom: var(--edge-padding); left: var(--edge-padding); }
+.world-hud__br { bottom: var(--edge-padding); right: var(--edge-padding); text-align: right; align-items: flex-end; }
+
+.world-hud__title {
+  font-size: clamp(0.9rem, 1.6vw, 1.2rem);
+  letter-spacing: 0.32em;
+  color: var(--color-text-primary);
+}
+
+.hud-continue, .hud-back {
+  all: unset;
+  pointer-events: auto;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.18em;
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-muted);
+  padding: 0.55rem 0.9rem;
+  border-radius: 2px;
+  transition: color 0.3s ease, border-color 0.3s ease;
+}
+.hud-continue:hover, .hud-back:hover { color: #FFF; border-color: #FFF; }
+.hud-continue:focus-visible, .hud-back:focus-visible { outline: 1px solid #FFF; outline-offset: 2px; }
+
+.hud-back { position: absolute; top: calc(var(--edge-padding) + 3.4rem); left: var(--edge-padding); z-index: 3; }
+
+/* ---------- Project Modal (layout spec §7) ---------- */
+.project-modal {
+  width: min(92vw, 980px);
+  max-height: 86dvh;
+  overflow-y: auto;
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: 3px;
+  color: var(--color-text-primary);
+  font-family: var(--font-grotesk);
+}
+.project-modal__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.4rem;
+  border-bottom: 1px solid var(--color-line);
+  position: sticky; top: 0;
+  background: var(--color-surface);
+}
+.project-modal__close {
+  all: unset;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.16em;
+  color: var(--color-text-secondary);
+}
+.project-modal__close:hover { color: #FFF; }
+.project-modal__body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: 1.8rem;
+  padding: 1.6rem 1.4rem 2rem;
+}
+.project-modal__media { margin: 0; }
+.project-modal__media img {
+  width: 100%;
+  border: 1px solid var(--color-line);
+  border-radius: 2px;
+  display: block;
+}
+.project-modal__media figcaption { margin-top: 0.5rem; color: var(--color-text-secondary); }
+.project-modal__id { color: var(--color-text-secondary); }
+.project-modal__title {
+  font-size: clamp(1.4rem, 3vw, 2.2rem);
+  letter-spacing: 0.06em;
+  margin: 0.4rem 0 0.8rem;
+}
+.project-modal__overview { color: var(--color-text-secondary); line-height: 1.6; margin: 0 0 1.2rem; }
+.project-modal__fields {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 0.9rem 1.4rem;
+  margin: 0 0 1.4rem;
+}
+.project-modal__fields dt {
+  font-family: var(--font-mono); font-size: 0.58rem; letter-spacing: 0.16em;
+  color: var(--color-muted); margin-bottom: 0.25rem;
+}
+.project-modal__fields dd { margin: 0; font-size: 0.85rem; }
+.project-modal__dev h3 { margin: 1rem 0 0.4rem; color: var(--color-text-secondary); }
+.project-modal__dev p { margin: 0; color: #C9C9C9; line-height: 1.65; font-size: 0.9rem; }
+.project-modal__links { display: flex; gap: 0.8rem; margin-top: 1.4rem; flex-wrap: wrap; }
+.project-modal__link {
+  font-family: var(--font-mono); font-size: 0.65rem; letter-spacing: 0.16em;
+  color: #FFF; text-decoration: none;
+  border: 1px solid #5A5A5A; padding: 0.6rem 1rem; border-radius: 2px;
+  transition: border-color 0.3s ease;
+}
+.project-modal__link:hover { border-color: #FFF; }
+
+/* ---------- responsive ---------- */
+@media (max-width: 1023px) {
+  .project-display--main { width: clamp(260px, 46vw, 420px); }
+  .project-display { width: clamp(200px, 40vw, 340px); }
+}
+@media (max-width: 767px) {
+  .project-track { width: max(2200px, 300vw); }
+  .project-display, .project-display--main, .project-display--experiment {
+    width: clamp(190px, 58vw, 300px);
+  }
+  .world-hud__title { letter-spacing: 0.22em; }
+  .hud-back { display: none; }          /* kembali via scroll-up alami */
+  .project-modal__body { grid-template-columns: 1fr; }
+  .project-modal__fields { grid-template-columns: 1fr; }
+}
+
+/* reduced motion: matikan float & drift */
+@media (prefers-reduced-motion: reduce) {
+  .project-object__float, .terrain__float { animation: none; }
+}
