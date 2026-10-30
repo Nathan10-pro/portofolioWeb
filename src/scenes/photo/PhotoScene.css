@@ -1,0 +1,174 @@
+/* ============================================================
+   PHOTO SCENE STYLES — editorial full-screen composition.
+   Foto = objek terbesar; tipografi kecil di tepi; tanpa frame
+   dekoratif; ruang bernapas (§2 spec PHOTO).
+   ============================================================ */
+
+.scene--photo {
+  position: relative;
+  background: var(--color-bg);
+}
+
+.photo-canvas {
+  position: absolute;
+  inset: 0;
+  cursor: crosshair;
+}
+.photo-canvas canvas { display: block; }
+
+/* Area fokus keyboard/screen-reader — secara visual & pointer tembus,
+   jadi fluid tetap menerima pointermove; klik mouse ditangani canvas.
+   Saat difokuskan via Tab, outline muncul dan Enter mengaktifkannya. */
+.photo-hitarea {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(78vw, 620px);
+  height: min(78vh, 775px);
+  transform: translate(-50%, -50%);
+  background: none;
+  border: none;
+  z-index: 2;
+  pointer-events: none;
+  cursor: default;
+}
+.photo-hitarea:focus-visible {
+  pointer-events: auto;
+}
+
+
+/* ---------- Overlay tipografi ---------- */
+.photo-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.8s var(--ease-out-quint);
+}
+.photo-overlay.is-ready { opacity: 1; }
+
+.photo-index {
+  position: absolute;
+  left: var(--edge-padding);
+  top: 50%;
+  transform: rotate(180deg) translateY(50%);
+  writing-mode: vertical-rl;
+  color: var(--color-muted);
+}
+
+.photo-hint {
+  position: absolute;
+  bottom: calc(var(--edge-padding) + 2.2rem);
+  left: 50%;
+  transform: translateX(-50%);
+  color: var(--color-text-secondary);
+}
+@media (max-width: 767px) {
+  .photo-hint { bottom: calc(var(--edge-padding) + 3rem); }
+  .photo-index { display: none; }
+}
+
+/* ---------- Fallback non-WebGL ---------- */
+.photo-fallback {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  gap: 1rem;
+  grid-template-rows: 1fr auto;
+  padding: calc(var(--edge-padding) * 3);
+}
+.photo-fallback img {
+  max-width: min(80vw, 480px);
+  max-height: 70vh;
+  filter: grayscale(1);
+}
+.photo-fallback__bio {
+  justify-self: center;
+  font-size: var(--text-meta);
+  letter-spacing: var(--tracking-meta);
+  color: var(--color-text-primary);
+  background: none;
+  border: 1px solid var(--color-muted);
+  padding: 0.6rem 1.2rem;
+}
+
+/* ---------- Photo Bio Modal (konten di dalam .modal-panel global) --- */
+.photo-bio-modal {
+  color: var(--color-text-primary);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(1.25rem, 3vh, 2.5rem);
+}
+
+.photo-bio-modal__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 1px solid var(--color-line);
+  padding-bottom: 1.25rem;
+}
+
+.photo-bio-modal__name {
+  font-size: var(--text-h2);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+  margin: 0 0 0.35rem;
+  text-transform: uppercase;
+}
+
+.photo-bio-modal__close {
+  font-size: var(--text-meta);
+  letter-spacing: var(--tracking-meta);
+  color: var(--color-text-secondary);
+  background: none;
+  border: 1px solid var(--color-line);
+  padding: 0.55rem 0.9rem;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+}
+.photo-bio-modal__close:hover {
+  color: var(--color-text-primary);
+  border-color: var(--color-muted);
+}
+
+.photo-bio-modal__body {
+  display: grid;
+  gap: 1.5rem;
+}
+.bio-block p {
+  margin: 0.5rem 0 0;
+  color: var(--color-text-secondary);
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
+  max-width: 60ch;
+}
+.bio-focus {
+  list-style: none;
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.5rem 0 0;
+  margin: 0;
+  flex-wrap: wrap;
+}
+.bio-focus li {
+  font-size: var(--text-meta);
+  letter-spacing: var(--tracking-meta);
+  text-transform: uppercase;
+  border: 1px solid var(--color-line);
+  padding: 0.35rem 0.7rem;
+  color: var(--color-text-primary);
+}
+
+.photo-bio-modal__sig {
+  height: 44px;
+  width: auto;
+  align-self: flex-end;
+  opacity: 0.85;
+  filter: grayscale(1) invert(1); /* signature dummy gelap → putih di surface gelap */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .photo-overlay { transition: none; }
+}
