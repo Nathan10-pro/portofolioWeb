@@ -10,7 +10,7 @@
    ============================================================ */
 
 import { useRef } from 'react';
-import type { FluidField } from '../../systems/fluid/field';
+import type { FluidEngine } from '../../fluid/core/FluidEngine';
 import FluidReveal from './effects/FluidReveal';
 import CssMaskFallback from './CssMaskFallback';
 
@@ -23,12 +23,13 @@ interface Props {
   reducedMotion: boolean;
   onReady?: () => void;
   onPhotoClick?: () => void;
-  fieldRef: React.MutableRefObject<FluidField | null>;
+  engineRef: React.MutableRefObject<FluidEngine | null>;
+  onContextLost?: () => void;
 }
 
 export default function PhotoImage({
   bwSrc, colorSrc, webgl, active, paused, reducedMotion,
-  onReady, onPhotoClick, fieldRef,
+  onReady, onPhotoClick, engineRef, onContextLost,
 }: Props) {
   const hostRef = useRef<HTMLDivElement>(null);
 
@@ -43,7 +44,8 @@ export default function PhotoImage({
           reducedMotion={reducedMotion}
           onReady={onReady}
           onPhotoClick={onPhotoClick}
-          fieldRef={fieldRef}
+          engineRef={engineRef}
+          onContextLost={onContextLost}
         />
       ) : (
         <CssMaskFallback

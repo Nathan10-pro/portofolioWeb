@@ -42,7 +42,8 @@ export default function PhotoScene({ active, goNext }: Props) {
   const [bioOpen, setBioOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const lastPointer = useRef({ x: 0, y: 0, t: 0 });
-  const { fieldRef, feedPointer, feedLeave } = useFluidReveal({ active, reducedMotion: reduced });
+  const { engineRef, feedPointer, feedLeave } = useFluidReveal({ active, reducedMotion: reduced });
+  const [contextLost, setContextLost] = useState(false);
 
   const openBio = useCallback(() => {
     if (modal.isOpen) return;
@@ -68,10 +69,12 @@ export default function PhotoScene({ active, goNext }: Props) {
       if (bioOpen) return;
       const now = performance.now();
       const dt = Math.max((now - lastPointer.current.t) / 1000, 1e-4);
-      const speedPx = Math.hypot(e.clientX - lastPointer.current.x, e.clientY - lastPointer.current.y) / dt;
+      const dx = e.clientX - lastPointer.current.x;
+      const dy = e.clientY - lastPointer.current.y;
+      const speedPx = Math.hypot(dx, dy) / dt;
       lastPointer.current = { x: e.clientX, y: e.clientY, t: now };
       const { u, v, inside } = toUV(e.clientX, e.clientY);
-      feedPointer(u, v, speedPx, inside);
+      feedPointer(u, v, speedPx, inside, dx, -dy);
     };
     const onLeave = () => feedLeave();
 
@@ -90,13 +93,14 @@ export default function PhotoScene({ active, goNext }: Props) {
       <PhotoImage
         bwSrc={profile.assets.photoBW}
         colorSrc={profile.assets.photoColor}
-        webgl={webgl}
+        webgl={webgl && !contextLost}
         active={active}
         paused={bioOpen}
         reducedMotion={reduced}
         onReady={() => setReady(true)}
         onPhotoClick={openBio}
-        fieldRef={fieldRef}
+        engineRef={engineRef}
+        onContextLost={() => setContextLost(true)}
       />
 
       {/* Pintu keyboard/screen-reader ke modal — transparan secara visual,
