@@ -67,14 +67,57 @@ export class FluidField {
   private pvx = 0; private pvy = 0;
   private lastMoveT = -10;
   private insidePhoto = false;
-
+  /** Penguat karakter dari kecepatan pointer px/detik (mode eksternal). */
+  private speedBoost = 0;
   // Scheduler autonomous
   private nextAutoAt = 0;
   private rngSeed = 123456789;
 
+  /** true bila scene menyuplai pointer/ambient dari luar (mode eksternal,
+   *  dipakai FluidReveal + hooks usePointerPosition/useAmbientReveal). */
+  externalPointer = false;
+
   constructor(cfg: Partial<FluidConfig> = {}) {
     this.cfg = { ...DEFAULT_FLUID_CONFIG, ...cfg };
     this.nextAutoAt = this.rand(this.cfg.autoMinDelay, this.cfg.autoMinDelay + 3);
+  }
+
+  /** Suplai manual dari scene (mode eksternal): satu sample pointer. */
+  feedPointer(u: number, v: number, speedPx: number, inside: boolean, nowSec: number) {
+    this.externalPointer = true;
+    if (inside && (!this.insidePhoto || u !== this.px || v !== this.py)) {
+      const dt = Math.max(nowSec - this.lastMoveT, 1e-4);
+      // Velocity UV/detik + penguat kecepatan px/detik → karakter
+      // lambat=blob kecil, cepat=jejak lebih besar (spec §4B).
+      const uvSpeedBoost = clamp(speedPx / 900, 0, 1.6);
+      this.pvx = this.pvx * 0.7 + ((u - this.px) / dt) * 0.3;
+      this.pvy = this.pvy * 0.7 + ((v - this.py) / dt) * 0.3;
+      this.speedBoost = this.speedBoost * 0.6 + uvSpeedBoost * 0.4;
+      this.lastMoveT = nowSec;
+    }
+    this.px = u; this.py = v;
+    this.insidePhoto = inside;
+    if (inside) {
+      const speed = Math.hypot(this.pvx, this.pvy) * 0.5 + this.speedBoost * 0.5;
+      this.spawnOrFeed(
+        u, v, clamp(speed, 0, 2), 'pointer',
+        this.pvx, this.pvy,
+      );
+    } else {
+      this.speedBoost *= 0.9;
+    }
+  }
+
+  /** Suplai manual ambient event dari scene (mode eksternal). */
+  feedAmbient(x: number, y: number, dirX: number, dirY: number, strength: number) {
+    const e: Emitter = {
+      x, y,
+      vx: dirX * 0.28, vy: dirY * 0.28, // lebih lambat dari interaksi pointer (§4)
+      r: this.cfg.baseRadius * 0.5, targetR: this.cfg.baseRadius * 0.8,
+      s: 0.35 * strength + 0.1, phase: Math.random() * 10, life: 2.6 + strength, source: 'auto',
+    };
+    if (this.emitters.length >= this.cfg.maxEmitters) this.emitters.shift();
+    this.emitters.push(e);
   }
 
   setConfig(patch: Partial<FluidConfig>) {
@@ -146,7 +189,7 @@ export class FluidField {
     this.sx += (this.px - this.sx) * k;
     this.sy += (this.py - this.sy) * k;
 
-    if (this.insidePhoto) {
+    if (this.insidePhoto && !this.externalPointer) {
       const speed = Math.hypot(this.pvx, this.pvy);
       this.spawnOrFeed(
         this.sx, this.sy, clamp(speed, 0, 2) * 0.5, 'pointer',
@@ -157,8 +200,10 @@ export class FluidField {
       this.pvx *= vd; this.pvy *= vd;
     }
 
-    // --- Autonomous reveal (§4C): sesekali, interval bervariasi, dominan horizontal
-    if (nowSec >= this.nextAutoAt) {
+    // --- Autonomous reveal internal (§4C): hanya dipakai bila scene
+    // TIDAK menyuplai pointer eksternal (`externalPointer=true`, mis.
+    // FluidReveal yang punya useAmbientReveal sendiri — spec v2.0 §8).
+    if (!this.externalPointer && nowSec >= this.nextAutoAt) {
       const horizontal = Math.random() < 0.8;
       const startX = horizontal ? (Math.random() < 0.5 ? -0.05 : 1.05) : Math.random();
       const startY = horizontal ? clamp(this.rand(0.25, 0.75), 0, 1) : (Math.random() < 0.5 ? -0.05 : 1.05);
@@ -186,6 +231,9 @@ export class FluidField {
 
       // Pointer keluar area → hitungan mundur singkat lalu susut (return-to-B&W halus)
       if (e.life < 0 && e.source === 'pointer' && !this.insidePhoto) e.life = 1.2;
+      // Mode eksternal: pointer statis > ~0.6s diperlakukan "keluar"
+      // → STATE 05 Return (mask memudar, tidak langsung hilang).
+      if (e.life < 0 && e.source === 'pointer' && this.externalPointer && nowSec - this.lastMoveT > 0.6) e.life = 1.2;
       if (e.life > 0) { e.life -= dt; if (e.life <= 0) e.targetR = 0; }
 
       if (e.r < e.targetR) e.r += (e.targetR - e.r) * (1 - Math.exp(-5 * dt));

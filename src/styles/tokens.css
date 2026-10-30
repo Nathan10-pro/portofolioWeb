@@ -54,6 +54,12 @@
   --edge-padding: clamp(1rem, 3vw, 2.5rem); /* jarak metadata ke 4 sudut */
   --photo-max:    min(72vh, 560px);
 
+  /* PHOTO v2.0 — soft charcoal background (§2 spec). */
+  --photo-bg:      #242424;
+  --photo-text:    #ffffff;
+  --photo-muted:   #aaaaaa;
+  --photo-divider: #444444;
+
   /* ---- Motion -------------------------------------------- */
   --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-in-out-quart: cubic-bezier(0.76, 0, 0.24, 1);

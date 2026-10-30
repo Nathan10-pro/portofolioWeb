@@ -1,13 +1,11 @@
 /* ============================================================
-   photoShaders.ts — sumber GLSL untuk PhotoCanvas.
-   Fragment = fluidMask.glsl (ditempatkan di src/shaders/photo/
-   sebagai referensi; di-inline sebagai string agar Vite tidak
-   butuh plugin .glsl). Vertex trivial: pass-through UV.
-   Prinsip terkunci: TIDAK ada distorsi geometri — sampling UV
-   identik untuk B&W dan COLOR; fluid hanya mask warna.
+   FluidShader.ts — sumber GLSL untuk FluidReveal.
+   Referensi file .glsl: src/shaders/photo/fluidMask.glsl.
+   Prinsip terkunci (§8): yang berubah HANYA mask reveal; geometri
+   foto tidak pernah bergerak → nol distorsi.
    ============================================================ */
 
-export const PHOTO_VERTEX_SHADER = /* glsl */ `
+export const FLUID_VERTEX_SHADER = /* glsl */ `
 varying vec2 vUv;
 void main() {
   vUv = uv;
@@ -15,7 +13,7 @@ void main() {
 }
 `;
 
-export const PHOTO_FRAGMENT_SHADER = /* glsl */ `
+export const FLUID_FRAGMENT_SHADER = /* glsl */ `
 #define MAX_EMITTERS 8
 
 uniform sampler2D uBwTex;
@@ -24,7 +22,8 @@ uniform vec4 uEmitters[MAX_EMITTERS]; // xy=UV plane, z=radius, w=strength
 uniform float uTime;
 uniform float uAspect;        // width/height plane
 uniform float uMaxReveal;     // plafon intensitas warna
-uniform float uEdgeSoftness;  // ketebalan soft edge mask
+uniform float uEdgeSoftness;  // feather lembut (§5 soft edge)
+uniform float uRipple;        // amplitudo ripple tepi (hybrid §4)
 
 varying vec2 vUv;
 
@@ -33,10 +32,15 @@ float smin(float a, float b, float k) {
   return mix(b, a, h) - k * h * (1.0 - h);
 }
 
+// Organic shape + ripple movement (spec v2.0 §4 Hybrid fluid):
+// organic menentukan bentuk utama, ripple memberi gelombang lembut
+// pada BATAS mask — bukan refraksi pada foto.
 float wobble(vec2 p, float seed) {
-  return 0.035 * sin(p.x * 9.0 + uTime * 1.3 + seed * 17.0)
-       + 0.025 * sin(p.y * 11.0 - uTime * 0.9 + seed * 7.0)
-       + 0.018 * sin((p.x + p.y) * 14.0 + uTime * 1.7 + seed * 23.0);
+  return uRipple * (
+       0.035 * sin(p.x * 9.0  + uTime * 1.3 + seed * 17.0)
+     + 0.025 * sin(p.y * 11.0 - uTime * 0.9 + seed * 7.0)
+     + 0.018 * sin((p.x + p.y) * 14.0 + uTime * 1.7 + seed * 23.0)
+  );
 }
 
 void main() {

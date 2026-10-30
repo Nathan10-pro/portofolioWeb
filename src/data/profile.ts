@@ -10,13 +10,17 @@ import type { ProfileData } from '../types';
 
 export const profile: ProfileData = {
   name: 'NATHAN',
-  role: 'STUDENT',
+  role: 'CREATIVE DEVELOPER', // spec PHOTO v2.0 §6 (dulu 'STUDENT')
   major: 'SOFTWARE DEVELOPMENT',
+
+  /** Tagline kecil di bawah identitas (§6). Placeholder. */
+  tagline: '[PLACEHOLDER] Exploring creativity through technology.',
+  taglineSub: '[PLACEHOLDER] Design · Development · Experimentation',
 
   // Empat sudut Photo Scene (§4)
   cornerMeta: [
     { corner: 'top-left',     label: 'NATHAN' },
-    { corner: 'top-right',    label: 'STUDENT' },
+    { corner: 'top-right',    label: 'CREATIVE DEVELOPER' },
     { corner: 'bottom-left',  label: 'SOFTWARE DEVELOPMENT' },
     { corner: 'bottom-right', label: 'AI ENGINEERING' },
   ],

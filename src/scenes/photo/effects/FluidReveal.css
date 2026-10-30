@@ -1,0 +1,54 @@
+/* ============================================================
+   FluidReveal.css — styling layer WebGL + fallback CSS mask.
+   Layout foto: centered, width 34–42vw, max 520px (spec v2.0 §3).
+   ============================================================ */
+
+.photo-image {
+  position: absolute;
+  inset: 0;
+}
+
+.fluid-reveal {
+  position: absolute;
+  inset: 0;
+  cursor: crosshair;
+}
+.fluid-reveal canvas { display: block; }
+
+/* ---------- Fallback CSS mask (non-WebGL) ---------- */
+.css-mask-fallback {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  cursor: crosshair;
+}
+.css-mask-fallback img {
+  grid-area: 1 / 1;
+  width: min(42vw, 520px);
+  height: auto;
+  max-height: 72vh;
+  object-fit: contain;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+.css-mask-fallback__color {
+  --mx: 50%;
+  --my: 50%;
+  --r: 0%;
+  -webkit-mask-image: radial-gradient(circle at var(--mx) var(--my), #000 0%, transparent 100%);
+  mask-image: radial-gradient(circle at var(--mx) var(--my), #000 0%, transparent 100%);
+  -webkit-mask-size: 200% 200%;
+  mask-size: 200% 200%;
+  -webkit-mask-position: calc(var(--mx) * -1) calc(var(--my) * -1);
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+/* Sederhana tapi tetap halus: reveal mengikuti pointer dengan fade. */
+.css-mask-fallback__color.is-revealing {
+  opacity: 1;
+  -webkit-mask-image: radial-gradient(circle 180px at var(--mx) var(--my), #000 30%, transparent 72%);
+  mask-image: radial-gradient(circle 180px at var(--mx) var(--my), #000 30%, transparent 72%);
+  -webkit-mask-position: 0 0;
+  mask-position: 0 0;
+}

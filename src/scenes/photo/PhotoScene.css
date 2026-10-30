@@ -6,7 +6,10 @@
 
 .scene--photo {
   position: relative;
-  background: var(--color-bg);
+  /* PHOTO v2.0 §2: charcoal, bukan hitam pekat Loading (#080808),
+     supaya foto tidak tenggelam dan ada perbedaan suasana opening
+     vs pengalaman utama. */
+  background: var(--photo-bg);
 }
 
 .photo-canvas {
